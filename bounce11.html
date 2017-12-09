@@ -1,0 +1,113 @@
+<!DOCTYPE html> <!‐‐ see class tutorial / examples for comments, more features, etc. ‐‐>
+<html>  
+  <head>  
+	    <title>Three.js Project Template</title>
+	    <style>
+	      body { margin: 0; }
+    </style>  
+  </head>  
+  <body>
+	  <script src="http://threejs.org/build/three.min.js"></script>
+	  <script src="OrbitControls.js"></script> <!-- This is the OrbitControl.js file -->
+	  <script>
+		var camera, scene, renderer, mesh,box, controls,friction, boxsize = 6;
+		var speed;
+		var acceleration =-.03;
+		friction = .9;
+		var dx = 0.05;
+		var dy = 0.0; // increment of y axis 
+		var dz = 0.05; // increment of z axis
+		    init();
+		    makescene();
+		    animate();
+		    function init() {
+			      camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight,
+				                                            0.1, 1000 );
+			      camera.position.z = 10;
+			       
+			      scene = new THREE.Scene();
+
+				 controls = new THREE.OrbitControls( camera ); // creating the orbitControl object and feeding it the camera
+	      
+			      var light = new THREE.PointLight( 0xffffff, 1.2 );
+			      light.position.set( -2, 2, 6 );
+			      scene.add( light );
+			       
+			      renderer = new THREE.WebGLRenderer( { antialias: true } );
+			      renderer.setSize( window.innerWidth, window.innerHeight );
+			      renderer.setPixelRatio( window.devicePixelRatio );
+			      renderer.setClearColor( 0x002080 );
+			      document.body.appendChild( renderer.domElement );
+		    }
+    function makescene() { // replace below with your code ...
+	      box = new THREE.Mesh( new THREE.CubeGeometry( boxsize, boxsize, boxsize ),  
+		                                new THREE.MeshBasicMaterial( { wireframe: true,
+			                                                               color: 0xFFFF00 } ) );
+	      box.rotation.y = Math.PI / 2.5;
+	
+	scene.add( box );
+	      var ballGeometry = new THREE.SphereGeometry( 0.3, 32, 32 );
+	      var ballMaterial = new THREE.MeshLambertMaterial( {color: 0xf6546a} );
+	      mesh = new THREE.Mesh( ballGeometry, ballMaterial );
+	      box.add( mesh );
+	/*
+	Here, I give the sphere (mesh) a starting position that is not at the exact center
+	so the movement of the ball is not in one line.
+		*/
+			mesh.position.x = -.3567;
+			mesh.position.y = 2.7;
+			mesh.position.z = .345;      
+		speed = 0;
+    }
+    function update() { // replace below with your code ...
+	/*
+	Added the changes in position to the y and z axis, and added
+	checking hitting the borders of both y and z, as well.
+	*/
+		speed+=acceleration;
+	     mesh.position.x += dx;
+	      mesh.position.y += speed;
+	     mesh.position.z += dz;
+		if ( mesh.position.x > 2.7 || mesh.position.x < -2.7 ) // move back and forth
+		{
+			        dx = -dx;
+			        applyFriction();
+
+		}
+		if (mesh.position.y <=-boxsize/2-.3 && speed<0){
+
+			applyFriction();
+			mesh.position.y = -boxsize/2+.3;
+			speed = 0.5547972603+.03;
+		}
+		if (mesh.position.y >=boxsize/2-.3 && speed>0){
+			applyFriction();
+			mesh.position.y = boxsize/2-.3;
+			speed = -speed;
+		}
+		if ( mesh.position.z > 2.7 || mesh.position.z < -2.7 ){ // move back and forth
+			        dz = -dz;
+			        applyFriction();
+			    }
+	}
+
+	function applyFriction(){
+
+			        dx = dx * friction;
+			        speed = speed * friction;
+			        dz = dz * friction;
+	}
+
+	function setPoperSpeedAndPositionAfterYouCrossTheBorderOfABoxOrAnyOtherObject(){}
+	    function animate() {
+		      requestAnimationFrame( animate );
+		      update();
+		      render();
+	    }
+	     
+	    function render() {
+		      renderer.render( scene, camera );
+	    }
+    </script>  
+  </body>  
+</html>
