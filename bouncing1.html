@@ -10,221 +10,76 @@
 	  <script src="http://threejs.org/build/three.min.js"></script>
 	<script src="OrbitControls.js"></script> <!-- This is the OrbitControl.js file -->
 	  <script>
-		var camera, scene, renderer, mesh,box, controls, friction, sphereRadius =0.3, boxsize = 6;
-		var lowerWall= -boxsize/2+sphereRadius;
-		var leftmostWall = -boxsize/2+sphereRadius;
-		var closestWall = -boxsize/2+sphereRadius;
-		var upperWall=  boxsize/2-sphereRadius;
-		var rightmostWall = boxsize/2-sphereRadius;
-		var furthestWall = boxsize/2-sphereRadius;
-		var speed;
-		var acceleration =-.03;
-		friction = 0.9;
+		var camera, scene, renderer, mesh, box, controls, boxsize = 6;
 		var dx = 0.05;
-var dy = 0.0; // increment of y axis 
-var dz = 0.05; // increment of z axis
-    init();
-    makescene();
-    animate();
-    function init() {
-	      camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight,
-		                                            0.1, 1000 );
-	      camera.position.z = 10;
-	       
-	      scene = new THREE.Scene();
+		var dy = 0.05; // increment of y axis 
+		var dz = 0.05; // increment of z axis
+	    init();
+	    makescene();
+	    animate();
+	    function init() {
+		      camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight,
+			                                            0.1, 1000 );
+		      camera.position.z = 10;
+		       
+		      scene = new THREE.Scene();
+		       
+		      var light = new THREE.PointLight( 0xffffff, 1.2 );
+		      light.position.set( -2, 2, 6 );
+		      scene.add( light );
+		       
+		      renderer = new THREE.WebGLRenderer( { antialias: true } );
+		      renderer.setSize( window.innerWidth, window.innerHeight );
+		      renderer.setPixelRatio( window.devicePixelRatio );
+		      renderer.setClearColor( 0x002080 );
+		      document.body.appendChild( renderer.domElement );
+		controls = new THREE.OrbitControls( camera ); // creating the orbitControl object and feeding it the camera
 
-controls = new THREE.OrbitControls( camera ); // creating the orbitControl object and feeding it the camera
-      
-      var light = new THREE.PointLight( 0xffffff, 1.2 );
-      light.position.set( -2, 2, 6 );
-      scene.add( light );
-       
-      renderer = new THREE.WebGLRenderer( { antialias: true } );
-      renderer.setSize( window.innerWidth, window.innerHeight );
-      renderer.setPixelRatio( window.devicePixelRatio );
-      renderer.setClearColor( 0x002080 );
-      document.body.appendChild( renderer.domElement );
-		document.addEventListener( "keydown", onDocumentKeyDown, false );
-
-    }
+	    }
     function makescene() { // replace below with your code ...
 	      box = new THREE.Mesh( new THREE.CubeGeometry( boxsize, boxsize, boxsize ),  
 		                                new THREE.MeshBasicMaterial( { wireframe: true,
 			                                                               color: 0xFFFF00 } ) );
 	      box.rotation.y = Math.PI / 2.5;
-
+	
 	scene.add( box );
-	sphereRadius = 0.3;
-	      var ballGeometry = new THREE.SphereGeometry( sphereRadius, 32, 32 );
+	      var ballGeometry = new THREE.SphereGeometry( 0.3, 32, 32 );
 	      var ballMaterial = new THREE.MeshLambertMaterial( {color: 0xf6546a} );
 	      mesh = new THREE.Mesh( ballGeometry, ballMaterial );
 	      box.add( mesh );
-/*
-Here, I give the sphere (mesh) a starting position that is not at the exact center
-so the movement of the ball is not in one line.
-*/
+	/*
+	Here, I give the sphere (mesh) a starting position that is not at the exact center
+	so the movement of the ball is not in one line.
+	*/
 		mesh.position.x = -.3567;
-		mesh.position.y = 2.7;
-		mesh.position.z = .345;      
-		speed = 0;
+		  mesh.position.y = -.5;
+		  mesh.position.z = .345;      
+
     }
-    function update() { 
-	
-		var deltaY = displace(mesh.position.y, speed, lowerWall, upperWall, acceleration);
-		mesh.position.y = deltaY.position;
-		speed = deltaY.speed;
-		var deltaX = displace(mesh.position.x, dx,leftmostWall ,rightmostWall , 0);
-		mesh.position.x = deltaX.position;
-		dx = deltaX.speed;
-		var deltaZ = displace(mesh.position.z, dz, closestWall, furthestWall, 0);
-		mesh.position.z = deltaZ.position;
-		dz = deltaZ.speed;
-}
-
-/*
-Description: Function takes information of an object moving on an axis describing an initial speed and position (at the beginning of frame), borders on the axis of movement, and acceleration (pixels per frame per frame) and returns the speed and position on that axis after one frame of movement.
-Precondition: speed and position at the beginning of the frame are given. lower border is the negative edge and higherborder is positive. acceleration is given (0 if no acceleration)
-Post condition: returns the final position and speed on one axis of movement at the end of frame (beginning of next frame)
-*/
-function displace(initialPosition, initialSpeed, lowerBorder, higherBorder, acceleration){
-	var finalSpeed = initialSpeed + acceleration;
-	var displacement = initialSpeed + 1/2*acceleration;
-	if (!(displacement+initialPosition<lowerBorder || displacement+initialPosition>higherBorder)){
-		var finalPosition = initialPosition+displacement;
-		return {speed: finalSpeed, position: finalPosition};
+    function update() { // replace below with your code ...
+	/*
+	Added the changes in position to the y and z axis, and added
+	checking hitting the borders of both y and z, as well.
+	*/
+	      mesh.position.x += dx;
+	      mesh.position.y += dy;
+	      mesh.position.z += dz;
+		if ( mesh.position.x > 2 || mesh.position.x < -2 ) // move back and forth
+			        dx = -dx;
+		if ( mesh.position.y > 2 || mesh.position.y < -2 ) // move back and forth
+			        dy = -dy;
+		if ( mesh.position.z > 2 || mesh.position.z < -2 ) // move back and forth
+			        dz = -dz;
 	}
-	else if (displacement+initialPosition<lowerBorder){
-		var speedAtWall = -Math.sqrt(Math.pow(initialSpeed, 2)+2*acceleration*(lowerBorder - initialPosition));
-		var timeToWall = (lowerBorder - initialPosition)*2/(initialSpeed + speedAtWall);
-		var timeAwayFromWall = 1 - timeToWall;
-		var finalSpeedAfterImpact = -speedAtWall+acceleration*timeAwayFromWall;
-		var displacementAwayFromWall = (-speedAtWall+ finalSpeedAfterImpact)/2*timeAwayFromWall;
-		var finalPositionAwayFromWall = lowerBorder +displacementAwayFromWall;
-		return {speed: finalSpeedAfterImpact, position: finalPositionAwayFromWall};
-	}
-	else{
-		var speedAtWall = Math.sqrt(Math.pow(initialSpeed, 2)+2*acceleration*(higherBorder - initialPosition));
-		var timeToWall = (higherBorder - initialPosition)*2/(initialSpeed + speedAtWall);
-		var timeAwayFromWall = 1 - timeToWall;
-		var finalSpeedAfterImpact = -speedAtWall+acceleration*timeAwayFromWall;
-		var displacementAwayFromWall = (speedAtWall+ finalSpeedAfterImpact)/2*timeAwayFromWall;
-		var finalPositionAwayFromWall = higherBorder -displacementAwayFromWall;
-		return {speed: finalSpeedAfterImpact, position: finalPositionAwayFromWall};
-	}
-}
-
-function checkOutsideBorder(initialPosition,initialSpeed, border){
-	var finalSpeed = initialSpeed + acceleration;
-	var displacement = initialSpeed + 1/2*acceleration;
-	if (displacement+initialPosition<border) return true;
-	else return false;
-}
-
-function changePosition(initialPosition, initialSpeed){
-	var finalSpeed = initialSpeed + acceleration;
-	var displacement = initialSpeed + 1/2*acceleration;
-	var finalPosition = initialPosition+displacement;
-	speed = finalSpeed;
-	mesh.position.y = finalPosition;
-}
-
-function fixPosition(initialPosition, initialSpeed, border){
-	var speedAtWall = -Math.sqrt(Math.pow(initialSpeed, 2)+2*acceleration*(border - initialPosition));
-	var timeToWall = (border - initialPosition)*2/(initialSpeed + speedAtWall);
-	var timeAwayFromWall = 1 - timeToWall;
-	var finalSpeed = -speedAtWall+acceleration*timeAwayFromWall;
-	var displacementAwayFromWall = (-speedAtWall+ finalSpeed)/2*timeAwayFromWall;
-	speed = finalSpeed;
-	mesh.position.y = border +displacementAwayFromWall;
-}
-
-
-
-
-
-// 	// 	mesh.position.x +=dx;
-// 	// 	mesh.position.z += dz ;      
-// 	// 	if ( mesh.position.x > 2.7 || mesh.position.x < -2.7 ){ // move back and forth
-// 	//         dx = -dx;
-// 	// 		applyFriction();
-// 	// 	}
-// 		if (mesh.position.y + (speed+acceleration )<=-boxsize/2+sphereRadius && speed<0){
-// 			setPoperSpeedAndPositionAfterYouCrossTheBorderOfABoxOrAnyOtherObject(mesh.position.y, speed, -boxsize/2+sphereRadius);
-// 			applyFriction();
-// 			// speed=-speed;
-// 			}
-// 		// else if (mesh.position.y + (speed+acceleration )>=boxsize/2-sphereRadius && speed>0){
-// 		// 	setPoperSpeedAndPositionAfterYouCrossTheBorderOfABoxOrAnyOtherObject(mesh.position.y, speed, boxsize/2-sphereRadius);
-// 		// 	speed=-speed;
-// 		// 	}
-// 		else {
-// 			speed+=acceleration;
-//             mesh.position.y += speed;
-// 		}
-// 	// 	if ( mesh.position.z > 2.7 || mesh.position.z < -2.7 ) {// move back and forth
-// 	//         dz = -dz;
-// 	// 		applyFriction();
-// 	// 	}
-// }
-
-function onDocumentKeyDown(event){
-	var keyCode = event.which;
-	if (keyCode == 70)
-		if (friction<1)
-		friction =1;
-			else friction = 0.9;
-}
-
-function setPoperSpeedAndPositionAfterYouCrossTheBorderOfABoxOrAnyOtherObject(posBefore, speedBefore, posWall){
-	// var positive = 1;
-	// if (posBefore<posWall)
-	// 	positive = -positive;
-
-	// percentBeforeImpact = Math.abs(posBefore-posWall)/Math.abs(speedBefore);
-	// percentAfterImpact = 1-percentBeforeImpact;
-	// var newSpeed = positive*acceleration*percentBeforeImpact+speedBefore;
-	// speed = newSpeed+ positive*acceleration * percentAfterImpact;
-
-	// mesh.position.y = posWall- percentAfterImpact * speed;
-
-	var positive = 1;
-	if (posBefore<posWall)
-		positive = -positive;
-	var speedAtWall = Math.sqrt(Math.pow(speedBefore,2)+2*acceleration* (posWall - posBefore));
-	var timeForBefore =((-speedAtWall)-speedBefore)/acceleration;
-	var timeAtNoWall = Math.abs(((speedBefore+ acceleration)-speedBefore)/acceleration);
-	percentBeforeImpact = Math.abs(posBefore-posWall)/Math.abs(speedBefore);
-	
-percentAfterImpact = 1-percentBeforeImpact;
-	
-	var speedAtFinalDest = speedAtWall + acceleration * (timeAtNoWall- timeForBefore);
-	var newSpeed = positive*acceleration*percentBeforeImpact+speedBefore;
-	speed  = speedAtFinalDest;
-	// speed = newSpeed+ positive*acceleration * percentAfterImpact;
-
-		mesh.position.y = posWall+ speed*(timeAtNoWall- timeForBefore ) + 	1/2*acceleration * (timeAtNoWall- timeForBefore)*(timeAtNoWall- timeForBefore);
-	// mesh.position.y = posWall+ percentAfterImpact * speed;
-
-
-}
-
-
-	function applyFriction(){
-
-	    dx = dx * friction;
-	    speed = speed * friction;
-	    dz = dz * friction;
-	}
-
-    function animate() {
-      requestAnimationFrame( animate );
-      update();
-      render();
-    }
-     
-    function render() {
-	      renderer.render( scene, camera );
-    }
+	    function animate() {
+		      requestAnimationFrame( animate );
+		      update();
+		      render();
+	    }
+	     
+	    function render() {
+		      renderer.render( scene, camera );
+	    }
     </script>  
   </body>  
 </html>

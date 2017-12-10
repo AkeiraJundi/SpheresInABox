@@ -1,0 +1,279 @@
+<!DOCTYPE html> <!‐‐ see class tutorial / examples for comments, more features, etc. ‐‐>
+<html>  
+  <head>  
+	    <title>Three.js Project Template</title>
+	    <style>
+	      body { margin: 0; }
+    </style>  
+  </head>  
+  <body>
+	  <script src="http://threejs.org/build/three.min.js"></script>
+	<script src="OrbitControls.js"></script> <!-- This is the OrbitControl.js file -->
+	  <script>
+		var camera, scene, renderer, mesh,box, planexp, planexn, planeyp,planeyn, planezp, planezn, controls, friction, material, sphereRadius =0.3, sphereRadius2 = sphereRadius *2, boxsize = 6;
+		
+		// toggle buttons
+		var mirrorState = false;
+		var moveMirrorCondition = false; //extra feature in code
+		var boxWireframe = false;
+		var mirrorSphere, mirrorSphereCamera;
+
+		//values for walls for different balls
+		var lowerWall= -boxsize/2+sphereRadius;
+		var lowerWall2 = -boxsize/2+sphereRadius2;
+		var leftmostWall = -boxsize/2+sphereRadius;
+		var leftmostWall2 = -boxsize/2+sphereRadius2;
+		var closestWall = -boxsize/2+sphereRadius;
+		var closestWall2 = -boxsize/2+sphereRadius2;
+		var upperWall=  boxsize/2-sphereRadius;
+		var upperWall2=  boxsize/2-sphereRadius2;
+		var rightmostWall = boxsize/2-sphereRadius;
+		var rightmostWall2 = boxsize/2-sphereRadius2;
+		var furthestWall = boxsize/2-sphereRadius;
+		var furthestWall2 = boxsize/2-sphereRadius2;
+
+		//values for speed of balls
+		var speed=0;
+		var speed2 = 0;
+		var acceleration =-.03;
+		var friction_constant = 0.99;
+		friction = friction_constant;
+
+		//speed of x and z
+		var dx = 0.05;
+		var dx2 = 0.05;
+		var dz = 0.05; // increment of z axis
+		var dz2 = 0.05;
+
+		init();
+		makescene();
+		animate();
+		function init() 
+		{
+			// creating the planes and adding the planes
+			camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight,
+		                                            0.1, 1000 );
+			camera.position.z = 10;
+			scene = new THREE.Scene();
+			var geometry = new THREE.PlaneGeometry( boxsize, boxsize );
+			material = new THREE.MeshBasicMaterial( {color: 0xf6546a, side: THREE.DoubleSide, wireframe: true} );
+			material.transparent = true;
+			planexp = new THREE.Mesh( geometry, material );
+			planexn = new THREE.Mesh( geometry, material );
+			planeyn = new THREE.Mesh( geometry, material );
+			planeyp = new THREE.Mesh( geometry, material );
+			planezn = new THREE.Mesh( geometry, material );
+			planezp = new THREE.Mesh( geometry, material );
+			scene.add(planexp);
+			scene.add(planexn);
+			scene.add(planeyp);
+			scene.add(planeyn);
+			scene.add(planezp);
+			scene.add(planezn);
+
+			//creating the balls
+			var ballGeometry = new THREE.SphereGeometry( 0.3, 32, 32 );
+			var ballGeometry2 = new THREE.SphereGeometry ( sphereRadius2, 32, 32 );
+			var ballMaterial = new THREE.MeshLambertMaterial( {color: 0xFF546a } );
+			mirrorSphereCamera = new THREE.CubeCamera( 0.1, 5000, 512 );		
+			var mirrorSphereMaterial = new THREE.MeshBasicMaterial( { envMap: mirrorSphereCamera.renderTarget } );
+			mesh = new THREE.Mesh( ballGeometry, ballMaterial);
+			mirrorSphere = new THREE.Mesh( ballGeometry2, mirrorSphereMaterial );
+
+			mirrorSphere = new THREE.Mesh( ballGeometry2, mirrorSphereMaterial);
+
+				// mirrorCubeCamera.renderTarget.minFilter = THREE.LinearMipMapLinearFilter;
+				scene.add( mirrorSphereCamera );
+
+				mirrorSphereCamera.position = mirrorSphere.position;
+				scene.add(mirrorSphere);
+
+			scene.add( mesh );
+			mesh.position.x = -.3567;
+			mesh.position.y = 2.7;
+			mesh.position.z = .345;      
+
+			mirrorSphere.position.x = 0;
+			mirrorSphere.position.y = 0;
+			mirrorSphere.position.z = 0;
+
+			planexp.position.x = boxsize/2;
+			planexp.rotation.y = Math.PI/2;
+			planexn.position.x = -boxsize/2;
+			planexn.rotation.y = Math.PI/2;
+			planeyp.position.y = boxsize/2;
+			planeyp.rotation.x = Math.PI/2;
+			planeyn.position.y = -boxsize/2;
+			planeyn.rotation.x = Math.PI/2;
+			planezp.position.z = boxsize/2;
+			planezp.rotation.z = Math.PI/2;
+			planezn.position.z = -boxsize/2;
+			planezn.rotation.z = Math.PI/2;
+			controls = new THREE.OrbitControls( camera ); // creating the orbitControl object and feeding it the camera
+
+			//creating lights to make it look pretty
+			var light = new THREE.PointLight( 0xffffff, 1.2 );
+			light.position.set( -2, 2, 6 );
+			scene.add( light );
+			var light1 = new THREE.AmbientLight( 0xffffff);
+			light1.position.set( -3,-2,6);
+			scene.add( light1 );    
+	
+
+			renderer = new THREE.WebGLRenderer( { antialias: true } );
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			renderer.setPixelRatio( window.devicePixelRatio );
+			renderer.setClearColor( 0x002080 );
+			document.body.appendChild( renderer.domElement );
+			document.addEventListener( "keydown", onDocumentKeyDown, false );
+		}
+		function makescene() { // replace below with your code ...
+			
+		}
+
+		function update() { 
+
+			//extra feature to move ball
+			if (moveMirrorCondition)
+				moveMirror();
+
+			//if statement to check the collison 
+			if(Math.sqrt(Math.pow(mirrorSphere.position.x - mesh.position.x, 2) + Math.pow(mirrorSphere.position.z - mesh.position.z, 2) + Math.pow(mirrorSphere.position.y - mesh.position.y, 2)) < sphereRadius + sphereRadius2)
+				applyCollision();
+
+			//code that allows the ball to move with speed and gravity in mind
+			var deltaY = displace(mesh.position.y, speed, lowerWall, upperWall, acceleration);
+			mesh.position.y = deltaY.position;
+			speed = deltaY.speed;
+
+			var deltaX = displace(mesh.position.x, dx,leftmostWall ,rightmostWall , 0);
+			mesh.position.x = deltaX.position;
+			dx = deltaX.speed;
+
+			var deltaZ = displace(mesh.position.z, dz, closestWall, furthestWall, 0);
+			mesh.position.z = deltaZ.position;
+			dz = deltaZ.speed;
+
+		}
+
+		//extra feature added
+		function moveMirror(){
+
+			//mirror can move
+			var deltaY2 = displace(mirrorSphere.position.y, speed2, lowerWall2, upperWall2, acceleration);
+			mirrorSphere.position.y = deltaY2.position;
+			speed2 = deltaY2.speed;
+
+			var deltaX2 = displace(mirrorSphere.position.x, dx2, lowerWall2, upperWall2, 0);
+			mirrorSphere.position.x = deltaX2.position;
+			dx2 = deltaX2.speed;
+
+			var deltaZ2 = displace(mirrorSphere.position.z, dz2, lowerWall2, upperWall2, 0);
+			mirrorSphere.position.z = deltaZ2.position;
+			dz2 = deltaZ2.speed;
+		}
+
+/*
+Description: Function takes information of an object moving on an axis describing an initial speed and position (at the beginning of frame), borders on the axis of movement, and acceleration (pixels per frame per frame) and returns the speed and position on that axis after one frame of movement.
+Precondition: speed and position at the beginning of the frame are given. lower border is the negative edge and higherborder is positive. acceleration is given (0 if no acceleration)
+Post condition: returns the final position and speed on one axis of movement at the end of frame (beginning of next frame)
+*/
+		function displace(initialPosition, initialSpeed, lowerBorder, higherBorder, acceleration){
+			var finalSpeed = initialSpeed + acceleration;
+			var displacement = initialSpeed + 1/2*acceleration;
+			if (!(displacement+initialPosition<=lowerBorder || displacement+initialPosition>=higherBorder)){
+				var finalPosition = initialPosition+displacement;
+				return {speed: finalSpeed*friction, position: finalPosition};
+			}
+			else if (displacement+initialPosition<=lowerBorder){
+				var speedAtWall = -Math.sqrt(Math.abs(Math.pow(initialSpeed, 2)+2*acceleration*(lowerBorder - initialPosition)));
+				var timeToWall = (lowerBorder - initialPosition)*2/(initialSpeed + speedAtWall);
+				var timeAwayFromWall = 1 - timeToWall;
+				var finalSpeedAfterImpact = -speedAtWall+acceleration*timeAwayFromWall;
+				var displacementAwayFromWall = (-speedAtWall+ finalSpeedAfterImpact)/2*timeAwayFromWall;
+				var finalPositionAwayFromWall = lowerBorder +displacementAwayFromWall;
+				if (finalPositionAwayFromWall<lowerBorder){
+					finalPositionAwayFromWall = lowerBorder;
+				}
+				return {speed: finalSpeedAfterImpact*friction, position: finalPositionAwayFromWall};
+			}
+			else{
+				var speedAtWall = Math.sqrt(Math.abs(Math.pow(initialSpeed, 2)+2*acceleration*(higherBorder - initialPosition)));
+				var timeToWall = (higherBorder - initialPosition)*2/(initialSpeed + speedAtWall);
+				var timeAwayFromWall = 1 - timeToWall;
+				var finalSpeedAfterImpact = -speedAtWall+acceleration*timeAwayFromWall;
+				var displacementAwayFromWall = (speedAtWall+ finalSpeedAfterImpact)/2*timeAwayFromWall;
+				var finalPositionAwayFromWall = higherBorder -displacementAwayFromWall;
+				if (finalPositionAwayFromWall > higherBorder)
+					finalPositionAwayFromWall = higherBorder;
+				return {speed: finalSpeedAfterImpact*friction, position: finalPositionAwayFromWall};
+			}
+		}
+
+		//the speed of the two balls are changed when they collide
+		function applyCollision()
+		{
+			var tempspeed = speed;
+			var tempdx = dx;
+			var tempdz = dz;
+			speed = speed2;
+			dx = dx2;
+			dz = dz2;
+			speed2 = tempspeed;
+			dx2 = tempdx;
+			dz2 = tempdz;
+		}
+
+		//each key has its own feature on what should happen when it is pressed.
+		function onDocumentKeyDown(event){
+			var keyCode = event.which;
+			if (keyCode == 70){ // 'f' key
+				if (friction<1)
+				friction =1;
+					else friction = friction_constant;
+				}
+			else if (keyCode == 109) // '+' key on numpad
+				acceleration+=0.1;
+			else if (keyCode == 107) // '-' key on numpad
+				acceleration-=0.1;
+			else if (keyCode == 87) // 'w' key on keyboard
+				material.wireframe = true ;
+			else if (keyCode == 67) // 'c' key on keyboard
+				material.wireframe = false; 
+			else if (keyCode == 83) // 's' key on keyboard
+				mesh.material = new THREE.MeshPhongMaterial({color: 0xf6546a});
+			else if (keyCode == 68) // 'd' key on keyboard
+				mesh.material = new THREE.MeshLambertMaterial( {color:0xf6546a	 } );
+			else if (keyCode == 78) // 'n' key on keyboard
+				mesh.material = new THREE.MeshBasicMaterial({color:0xf6546a}); 
+			else if (keyCode == 66) // 'b' key on keyboard
+				moveMirrorCondition = !moveMirrorCondition;
+			else if (keyCode == 77) // 'm' key on keyboard
+			{
+				mirrorState = !mirrorState;
+				if(mirrorState == true)
+					mirrorSphere.material = new THREE.MeshLambertMaterial( {color: 0xFFFF00});
+				else
+					mirrorSphere.material = new THREE.MeshBasicMaterial( { envMap: mirrorSphereCamera.renderTarget } );
+			}
+
+
+			else if (keyCode == 82)
+				mirrorSphere.position.set(0,0,0);
+
+		}
+		function animate() {
+			requestAnimationFrame( animate );
+			update();
+			render();
+		}
+		     
+		function render() {
+			mirrorSphere.visible = false;
+	mirrorSphereCamera.updateCubeMap( renderer, scene );
+	mirrorSphere.visible = true;
+			renderer.render( scene, camera );
+		}
+    </script>  
+  </body>  
+</html>
